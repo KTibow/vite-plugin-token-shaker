@@ -1,0 +1,69 @@
+/* Test all transformation scenarios */
+
+@layer tokens {
+  :root {
+    /* Rule 1: Drop if never used */
+    --unused-color: #ff0000;
+    --unused-size: 20px;
+
+    /* Rule 4: Inline if logical */
+    --single-use-margin: 16px;
+    --m3-util-elevation-0: 0px;
+    --primary-color: #646cff;
+
+    /* Nested variable (used once, should inline fully to the base value) */
+    --m3-font: "Helvetica Neue", sans-serif;
+    --m3-font-display: var(--m3-font);
+
+    /* Rule 3: Mangle if used multiple times */
+    --m3-util-elevation-1: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Rule 2: Keep raw if set elsewhere */
+@layer tokens {
+  :root {
+    --m3-util-rounding-extra-large: 28px;
+  }
+}
+
+/* This sets the variable outside the token layer, so it should be kept raw */
+.custom {
+  --m3-util-rounding-extra-large: 50px;
+}
+
+/* Usage examples */
+
+.header {
+  /* Single use - should be inlined to "Roboto, system-ui" */
+  font-family: var(--m3-font-display);
+
+  /* Multiple uses - should be mangled */
+  color: var(--primary-color);
+  box-shadow: var(--m3-util-elevation-1);
+}
+
+.button {
+  /* Multiple uses - should be mangled */
+  background-color: var(--primary-color);
+  padding: var(--spacing-unit);
+
+  /* Single use - should be inlined */
+  margin: var(--single-use-margin);
+  box-shadow: var(--m3-util-elevation-0);
+}
+
+.card {
+  /* Set elsewhere - should keep raw name */
+  border-radius: var(--m3-util-rounding-extra-large);
+}
+
+.footer {
+  /* Multiple uses - should be mangled */
+  box-shadow: var(--m3-util-elevation-1);
+}
+
+/* Nested variable test - should inline to final value: "Helvetica Neue", sans-serif */
+.nested-test {
+  font-family: var(--m3-font-display);
+}

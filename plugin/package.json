@@ -1,0 +1,40 @@
+{
+  "name": "vite-plugin-token-shaker",
+  "version": "0.0.1",
+  "description": "Clean up anything in @layer tokens",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/KTibow/vite-plugin-token-shaker#readme",
+  "bugs": {
+    "url": "https://github.com/KTibow/vite-plugin-token-shaker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KTibow/vite-plugin-token-shaker.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsdown": "^0.16.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4"
+  },
+  "peerDependencies": {
+    "vite": "^7.2.4"
+  }
+}
