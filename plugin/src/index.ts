@@ -154,9 +154,13 @@ function resolveVariableValue(
   const variable = registry.get(varName);
   if (!variable) return `var(${varName})`;
 
-  return variable.value.replace(VAR_REF_REGEX, (_, nestedVarName) =>
-    resolveVariableValue(nestedVarName, registry, depth + 1),
-  );
+  return variable.value.replace(VAR_REF_REGEX, (_, nestedVarName) => {
+    const nestedVar = registry.get(nestedVarName);
+    if (nestedVar?.setElsewhere) {
+      return `var(${nestedVarName})`;
+    }
+    return resolveVariableValue(nestedVarName, registry, depth + 1);
+  });
 }
 
 // --- Mangling Logic (Global, build-unique IDs) ---
@@ -255,7 +259,7 @@ function transformCode(code: string, registry: Map<string, Token>): string {
         const resolvedValue = resolveVariableValue(varName, registry);
 
         // Emit canonical declaration with flattened value; dedupe per file
-        if (variable.emitDeclaration && !variable.isAlias) {
+        if (variable.emitDeclaration) {
           if (!emittedValues.has(resolvedValue)) {
             declarations.push(`${variable.mangledName}: ${resolvedValue}`);
             emittedValues.add(resolvedValue);
@@ -280,15 +284,15 @@ function transformCode(code: string, registry: Map<string, Token>): string {
     const variable = registry.get(varName);
     if (!variable) return original;
 
+    if (variable.setElsewhere) {
+      return original;
+    }
+
     if (variable.mangledName) {
       return `var(${variable.mangledName}${fallback ? `, ${fallback}` : ""})`;
     }
 
-    if (!variable.setElsewhere) {
-      return resolveVariableValue(varName, registry);
-    }
-
-    return original;
+    return resolveVariableValue(varName, registry);
   });
 
   return result;
