@@ -323,7 +323,6 @@ function getStats(registry: Map<string, Token>, mangledCount: number): string {
 
 export function tokenShaker(options: PluginOptions = {}): Plugin {
   const { manglePrefix = "--_", verbose = false } = options;
-  const registry = new Map<string, Token>();
 
   const log = verbose
     ? (...args: unknown[]) => console.log("[token-shaker]", ...args)
@@ -334,8 +333,6 @@ export function tokenShaker(options: PluginOptions = {}): Plugin {
     enforce: "pre",
 
     generateBundle(_outputOptions, bundle) {
-      registry.clear(); // Start fresh with bundle data
-
       const cssAssets = Object.entries(bundle).filter(
         ([name, asset]) => asset.type == "asset" && name.endsWith(".css"),
       ) as Array<[string, { type: "asset"; source: string }]>;
@@ -343,10 +340,10 @@ export function tokenShaker(options: PluginOptions = {}): Plugin {
       if (cssAssets.length == 0) return;
 
       // Extract from ONLY the bundled CSS
+      const registry = new Map<string, Token>();
       for (const [, asset] of cssAssets) {
         extractTokensVariables(asset.source, registry);
       }
-
       if (registry.size == 0) return;
 
       // Analyze ONCE from bundle
