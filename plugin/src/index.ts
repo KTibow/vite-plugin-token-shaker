@@ -64,6 +64,17 @@ function findTokensLayers(code: string): LayerSpan[] {
   return layers;
 }
 
+function blankOutTokensLayers(code: string): string {
+  let result = code;
+  for (const layer of findTokensLayers(code)) {
+    result =
+      result.slice(0, layer.start) +
+      " ".repeat(layer.end - layer.start) +
+      result.slice(layer.end);
+  }
+  return result;
+}
+
 // --- Variable Registry Operations (Global) ---
 
 function extractTokensVariables(
@@ -92,19 +103,10 @@ function extractTokensVariables(
   }
 }
 
-function markDeoptimizedFromCSS(
-  code: string,
+function markDeoptimized(
+  codeWithoutTokens: string,
   registry: Map<string, Token>,
 ): void {
-  // Blank out tokens layers to check definitions elsewhere
-  let codeWithoutTokens = code;
-  for (const layer of findTokensLayers(code)) {
-    codeWithoutTokens =
-      codeWithoutTokens.slice(0, layer.start) +
-      " ".repeat(layer.end - layer.start) +
-      codeWithoutTokens.slice(layer.end);
-  }
-
   for (const [varName, variable] of registry) {
     const setRegex = new RegExp(`${escapeRegex(varName)}\\s*:`, "g");
     if (setRegex.test(codeWithoutTokens)) {
@@ -358,8 +360,9 @@ export function tokenShaker(options: PluginOptions = {}): Plugin {
       // Single analysis pass
       resetUsageCounts(registry);
       for (const [, code] of bundledFiles) {
-        markDeoptimizedFromCSS(code, registry);
-        countVariableUsage(code, registry);
+        const codeWithoutTokens = blankOutTokensLayers(code);
+        markDeoptimized(codeWithoutTokens, registry);
+        countVariableUsage(codeWithoutTokens, registry);
       }
 
       // Mark variables referenced in JS as deoptimized to preserve them
