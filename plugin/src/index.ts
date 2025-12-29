@@ -5,7 +5,7 @@ import type { Plugin } from "vite";
 interface Token {
   value: string;
   usageCount: number;
-  setElsewhere: boolean;
+  deoptimized: boolean;
   mangledName?: string;
   isAlias?: boolean; // value is exactly one var(--x[, fallback]?)
   emitDeclaration?: boolean; // only canonical variable per resolved value emits
@@ -79,7 +79,7 @@ function extractTokensVariables(
         registry.set(varName, {
           value: varValue,
           usageCount: 0,
-          setElsewhere: false,
+          deoptimized: false,
           isAlias,
           emitDeclaration: false,
         });
@@ -92,7 +92,7 @@ function extractTokensVariables(
   }
 }
 
-function markVariablesSetElsewhere(
+function markDeoptimizedFromCSS(
   code: string,
   registry: Map<string, Token>,
 ): void {
@@ -108,7 +108,7 @@ function markVariablesSetElsewhere(
   for (const [varName, variable] of registry) {
     const setRegex = new RegExp(`${escapeRegex(varName)}\\s*:`, "g");
     if (setRegex.test(codeWithoutTokens)) {
-      variable.setElsewhere = true;
+      variable.deoptimized = true;
     }
   }
 }
@@ -156,7 +156,7 @@ function resolveVariableValue(
 
   return variable.value.replace(VAR_REF_REGEX, (_, nestedVarName) => {
     const nestedVar = registry.get(nestedVarName);
-    if (nestedVar?.setElsewhere) {
+    if (nestedVar?.deoptimized) {
       return `var(${nestedVarName})`;
     }
     return resolveVariableValue(nestedVarName, registry, depth + 1);
@@ -249,8 +249,8 @@ function transformCode(code: string, registry: Map<string, Token>): string {
       // Drop unused variables entirely
       if (variable.usageCount == 0) continue;
 
-      // Keep external (non-tokens-layer) definitions unchanged
-      if (variable.setElsewhere) {
+      // Keep deoptimized definitions unchanged
+      if (variable.deoptimized) {
         declarations.push(`${varName}: ${varValue}`);
         continue;
       }
@@ -284,7 +284,7 @@ function transformCode(code: string, registry: Map<string, Token>): string {
     const variable = registry.get(varName);
     if (!variable) return original;
 
-    if (variable.setElsewhere) {
+    if (variable.deoptimized) {
       return original;
     }
 
@@ -308,7 +308,7 @@ function getStats(registry: Map<string, Token>, mangledCount: number): string {
 
   for (const variable of registry.values()) {
     if (variable.usageCount == 0) drop++;
-    else if (variable.setElsewhere) keep++;
+    else if (variable.deoptimized) keep++;
     else if (variable.mangledName) mangle++;
     else inline++;
   }
@@ -358,9 +358,21 @@ export function tokenShaker(options: PluginOptions = {}): Plugin {
       // Single analysis pass
       resetUsageCounts(registry);
       for (const [, code] of bundledFiles) {
-        markVariablesSetElsewhere(code, registry);
+        markDeoptimizedFromCSS(code, registry);
         countVariableUsage(code, registry);
       }
+
+      // Mark variables referenced in JS as deoptimized to preserve them
+      // (JS expects original names, so we can't mangle or inline)
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type != "chunk") continue;
+        for (const [varName, variable] of registry) {
+          if (chunk.code.includes(varName)) {
+            variable.deoptimized = true;
+          }
+        }
+      }
+
       const mangledCount = generateMangledNames(registry, manglePrefix);
       log(getStats(registry, mangledCount));
 

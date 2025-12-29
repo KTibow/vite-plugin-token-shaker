@@ -9,7 +9,6 @@
     /* Rule 4: Inline if logical */
     --single-use-margin: 16px;
     --m3-util-elevation-0: 0px;
-    --primary-color: #646cff;
 
     /* Nested variable (used once, should inline fully to the base value) */
     --m3-font: "Helvetica Neue", sans-serif;
@@ -17,13 +16,10 @@
 
     /* Rule 3: Mangle if used multiple times */
     --m3-util-elevation-1: 2px 2px 4px rgba(0, 0, 0, 0.1);
-  }
-}
 
-/* Rule 2: Keep raw if set elsewhere */
-@layer tokens {
-  :root {
+    /* Rule 2: Keep raw if set/used elsewhere */
     --m3-util-rounding-extra-large: 28px;
+    --primary-color: #646cff;
   }
 }
 
@@ -38,14 +34,11 @@
   /* Single use - should be inlined to "Roboto, system-ui" */
   font-family: var(--m3-font-display);
 
-  /* Multiple uses - should be mangled */
-  color: var(--primary-color);
   box-shadow: var(--m3-util-elevation-1);
 }
 
 .button {
   /* Multiple uses - should be mangled */
-  background-color: var(--primary-color);
   padding: var(--spacing-unit);
 
   /* Single use - should be inlined */
