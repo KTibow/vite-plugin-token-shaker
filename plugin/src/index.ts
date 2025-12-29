@@ -251,7 +251,7 @@ function transformCode(code: string, registry: Map<string, Token>): string {
 
       // Keep deoptimized definitions unchanged
       if (variable.deoptimized) {
-        declarations.push(`${varName}: ${varValue}`);
+        declarations.push(`${varName}:${varValue}`);
         continue;
       }
 
@@ -261,7 +261,7 @@ function transformCode(code: string, registry: Map<string, Token>): string {
         // Emit canonical declaration with flattened value; dedupe per file
         if (variable.emitDeclaration) {
           if (!emittedValues.has(resolvedValue)) {
-            declarations.push(`${variable.mangledName}: ${resolvedValue}`);
+            declarations.push(`${variable.mangledName}:${resolvedValue}`);
             emittedValues.add(resolvedValue);
           }
         }
