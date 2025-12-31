@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-token-shaker",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Clean up anything in @layer tokens",
   "type": "module",
   "license": "MIT",

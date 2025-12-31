@@ -367,11 +367,15 @@ export function tokenShaker(options: PluginOptions = {}): Plugin {
 
       // Mark variables referenced in JS as deoptimized to preserve them
       // (JS expects original names, so we can't mangle or inline)
-      for (const chunk of Object.values(bundle)) {
-        if (chunk.type != "chunk") continue;
-        for (const [varName, variable] of registry) {
-          if (chunk.code.includes(varName)) {
+      for (const [varName, variable] of registry) {
+        if (variable.deoptimized) continue;
+
+        const matcher = new RegExp(`${escapeRegex(varName)}(?![a-z0-9-])`, "g");
+        for (const chunk of Object.values(bundle)) {
+          if (chunk.type != "chunk") continue;
+          if (matcher.test(chunk.code)) {
             variable.deoptimized = true;
+            break;
           }
         }
       }
