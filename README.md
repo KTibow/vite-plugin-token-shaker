@@ -1,8 +1,8 @@
 # vite-plugin-token-shaker
 
-CSS variables can't be easily tree shaken by default, even when they represent things like tokens. This plugin makes it so if you declare them in a `token` layer:
+CSS variables can't be easily tree shaken by default, even when they represent things like tokens. This plugin makes it so if you declare them in a `tokens` layer:
 ```css
-@layer token {
+@layer tokens {
   :root {
     --color-primary: #ff0000;
     --spacing-small: 8px;
